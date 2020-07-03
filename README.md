@@ -1,1 +1,1 @@
-# A simple HTTP proxy writtern in Rust
+# A simple HTTP proxy written in Rust
