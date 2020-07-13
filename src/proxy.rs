@@ -1,5 +1,5 @@
 use std::convert::Infallible;
-use std::net::SocketAddr;
+use std::net::{SocketAddr, ToSocketAddrs};
 use hyper::service::{make_service_fn, service_fn};
 use hyper::{Body, Client, Method, Request, Response, Server, StatusCode, upgrade::Upgraded, http};
 use log;
@@ -42,7 +42,7 @@ impl<'a> Proxy<'a> {
 
 async fn proxy(client: HttpClient, req: Request<Body>) -> Result<Response<Body>, hyper::Error> {
     log::info!("req: {:?}", req);
-    println!("req: {:?}", req.uri().authority().map(|a| a.as_str()).unwrap());
+
     if req.method() == Method::CONNECT {
         if let Some(addr) = host_addr(req.uri()) {
             tokio::task::spawn(async move {
@@ -72,7 +72,7 @@ async fn proxy(client: HttpClient, req: Request<Body>) -> Result<Response<Body>,
 }
 
 fn host_addr(uri: &http::Uri) -> Option<SocketAddr> {
-    uri.authority().and_then(|auth| auth.as_str().parse().ok())
+    uri.authority().and_then(|auth| auth.as_str().to_socket_addrs().unwrap().next())
 }
 
 async fn tunnel(upgraded: Upgraded, addr: SocketAddr) -> std::io::Result<()> {
